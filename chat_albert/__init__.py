@@ -11,8 +11,8 @@ from time import sleep
 import openai
 from albert import *
 
-md_iid = "0.5"
-md_version = "1.0"
+md_iid = "1.0"
+md_version = "1.3"
 md_id = "chat_albert"
 md_name = "ChatGPT"
 md_description = "Chat with GPT"
@@ -111,7 +111,7 @@ def completion_reply(message):
         return "Time's up!"
 
 
-class Plugin(QueryHandler):
+class Plugin(TriggerQueryHandler):
     def id(self):
         return md_id
 
@@ -130,7 +130,7 @@ class Plugin(QueryHandler):
     def initialize(self):
         self.icon = [os.path.dirname(__file__) + "/Bot.png"]
 
-    def handleQuery(self, query):
+    def handleTriggerQuery(self, query):
         stripped = query.string.strip()
         global msg
         history = []
