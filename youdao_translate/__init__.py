@@ -11,8 +11,8 @@ import random
 from time import sleep
 from albert import *
 
-md_iid = "0.5"
-md_version = "1.0"
+md_iid = "1.0"
+md_version = "1.3"
 md_id = "youdao_trans"
 md_name = "Youdao Translate"
 md_description = "Translate sentences using youdao_api"
@@ -93,7 +93,7 @@ class YouDaoAPI:
 
         return results
 
-class Plugin(QueryHandler):
+class Plugin(TriggerQueryHandler):
     def id(self):
         return md_id
 
@@ -112,10 +112,7 @@ class Plugin(QueryHandler):
     def initialize(self):
         self.icon = [os.path.dirname(__file__) + "/google_translate.png"]
 
-    def extensions(self):
-        return [self.e]
-
-    def handleQuery(self, query):
+    def handleTriggerQuery(self, query):
         results = []
         stripped = query.string.strip()
         if stripped:
