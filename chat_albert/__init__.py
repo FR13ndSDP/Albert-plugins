@@ -6,13 +6,14 @@ t: text-davinci-003
 """
 # import threading
 # import queue
-import os
+from pathlib import Path
 from time import sleep
+import os
 import openai
 from albert import *
 
-md_iid = "1.0"
-md_version = "1.3"
+md_iid = "2.0"
+md_version = "1.0"
 md_id = "chat_albert"
 md_name = "ChatGPT"
 md_description = "Chat with GPT"
@@ -20,8 +21,9 @@ md_license = "BSD-3"
 md_url = "https://github.com/albertlauncher/python/"
 md_lib_dependencies = "openai"
 md_maintainers = "@Fr13ndSDP"
-openai.api_key = 
-openai.organization = 
+
+openai.api_key =
+openai.organization =
 
 os.environ["http_proxy"] = "http://127.0.0.1:7890"
 os.environ["https_proxy"] = "http://127.0.0.1:7890"
@@ -30,70 +32,23 @@ os.environ["all_proxy"] = "socks5://127.0.0.1:7891"
 definition = [
     {
         "role": "system",
-        "content": # Put instructions here,
+        "content": "you are my helpful assitant, answear my questions in detail.",
     }
 ]
 
 msg = []
 
-"""
-# signal does not work, use threading
-def call_back_func(message):
-    pass
 
-
-def error_back_func(message):
-    pass
-
-
-def warp(*args, **kwargs):
-    q = kwargs.pop("queue")
-    f = kwargs.pop("function")
-    result = f(*args, **kwargs)
-    q.put(result)
-
-
-def time_out(interval, call_back=None, error_back=None):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            q = queue.Queue()
-            if "function" in kwargs:
-                raise ValueError("no function")
-            kwargs["function"] = func
-            if "queue" in kwargs:
-                raise ValueError("no queue")
-            kwargs["queue"] = q
-            t = threading.Thread(target=warp, args=args, kwargs=kwargs)
-            t.daemon = True
-            t.start()
-            try:
-                result = q.get(timeout=interval)
-                if call_back:
-                    threading.Timer(0, call_back, args=(result,)).start()
-                return result
-            except queue.Empty:
-                kwargs.pop("function")
-                kwargs.pop("queue")
-                return "Timeout!"
-
-        return wrapper
-
-    return decorator
-"""
-
-
-# @time_out(30, call_back=call_back_func, error_back=error_back_func)
 def chat_reply(message):
     try:
         chat = openai.ChatCompletion.create(
-            model="gpt-4", messages=message, temperature=1.0, request_timeout=30
+            model="gpt-3.5-turbo", messages=message, temperature=1.0, request_timeout=30
         )
         return chat.choices[0].message.content
     except:
         return "Time's up!"
 
 
-# @time_out(20, call_back=call_back_func, error_back=error_back_func)
 def completion_reply(message):
     try:
         complete = openai.Completion.create(
@@ -111,24 +66,15 @@ def completion_reply(message):
         return "Time's up!"
 
 
-class Plugin(TriggerQueryHandler):
-    def id(self):
-        return md_id
-
-    def name(self):
-        return md_name
-
-    def description(self):
-        return md_description
-
-    def defaultTrigger(self):
-        return "chat "
-
-    def synopsis(self):
-        return "message"
-
-    def initialize(self):
-        self.icon = [os.path.dirname(__file__) + "/Bot.png"]
+class Plugin(PluginInstance, TriggerQueryHandler):
+    def __init__(self):
+        TriggerQueryHandler.__init__(self,
+                                     id=md_id,
+                                     name=md_name,
+                                     description=md_description,
+                                     defaultTrigger='chat ')
+        PluginInstance.__init__(self, extensions=[self])
+        self.icon = [f"file:{Path(__file__).parent}/Bot.png"]
 
     def handleTriggerQuery(self, query):
         stripped = query.string.strip()
@@ -150,10 +96,10 @@ class Plugin(TriggerQueryHandler):
                 if (stripped[-1] == "g") & (stripped[-2] == "|"):
                     # display bot definition
                     query.add(
-                        Item(
+                        StandardItem(
                             id=md_id,
                             text=definition[0]["content"],
-                            icon=self.icon,
+                            iconUrls=self.icon,
                             subtext="GPT Definition",
                         )
                     )
@@ -167,8 +113,8 @@ class Plugin(TriggerQueryHandler):
                     else:
                         msg.append({"role": "assistant", "content": reply})
 
-                    item = Item()
-                    item.icon = self.icon
+                    item = StandardItem()
+                    item.iconUrls = self.icon
                     item.subtext = "GPT says, Click to copy"
                     item.text = reply
                     item.actions = [
@@ -181,8 +127,8 @@ class Plugin(TriggerQueryHandler):
                     query.add(item)
                 elif (stripped[-1] == "t") & (stripped[-2] == "|"):
                     reply = completion_reply(stripped[:-2])
-                    item = Item()
-                    item.icon = self.icon
+                    item = StandardItem()
+                    item.iconUrls = self.icon
                     item.subtext = "GPT says, Click to copy"
                     item.text = reply.replace("\n", "")
                     item.actions = [
@@ -199,10 +145,10 @@ class Plugin(TriggerQueryHandler):
                     history.append(item["content"])
 
                 query.add(
-                    Item(
+                    StandardItem(
                         id=md_id,
                         text="\n".join(history),
-                        icon=self.icon,
+                        iconUrls=self.icon,
                         subtext="History",
                         actions=[
                             Action(
@@ -216,10 +162,10 @@ class Plugin(TriggerQueryHandler):
 
         else:
             query.add(
-                Item(
+                StandardItem(
                     id=md_id,
                     text=md_name,
-                    icon=self.icon,
+                    iconUrls=self.icon,
                     subtext="Enter message to chat",
                 )
             )

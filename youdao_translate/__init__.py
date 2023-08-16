@@ -1,7 +1,7 @@
 """translation module.
 Synopsis: fy word
 """
-import os
+from pathlib import Path
 import json
 import urllib.parse
 import hashlib
@@ -11,8 +11,8 @@ import random
 from time import sleep
 from albert import *
 
-md_iid = "1.0"
-md_version = "1.3"
+md_iid = "2.0"
+md_version = "1.0"
 md_id = "youdao_trans"
 md_name = "Youdao Translate"
 md_description = "Translate sentences using youdao_api"
@@ -41,8 +41,8 @@ class YouDaoAPI:
 
     def get_url(self, src, dst, txt):
         # PRIVATE HERE
-        appKey = #APPKEY
-        secretKey = #TOKEN
+        appKey = 
+        secretKey = 
         # salt is a six-digits random number
         salt = ""
         for i in range(6):
@@ -93,24 +93,15 @@ class YouDaoAPI:
 
         return results
 
-class Plugin(TriggerQueryHandler):
-    def id(self):
-        return md_id
-
-    def name(self):
-        return md_name
-
-    def description(self):
-        return md_description
-
-    def defaultTrigger(self):
-        return "fy "
-
-    def synopsis(self):
-        return "text"
-
-    def initialize(self):
-        self.icon = [os.path.dirname(__file__) + "/google_translate.png"]
+class Plugin(PluginInstance, TriggerQueryHandler):
+    def __init__(self):
+        TriggerQueryHandler.__init__(self,
+                                     id=md_id,
+                                     name=md_name,
+                                     description=md_description,
+                                     defaultTrigger='fy ')
+        PluginInstance.__init__(self, extensions=[self])
+        self.icon = [f"file:{Path(__file__).parent}/youdao_translate.png"]
 
     def handleTriggerQuery(self, query):
         results = []
@@ -124,26 +115,24 @@ class Plugin(TriggerQueryHandler):
             translation = YouDaoAPI(stripped).generate_display()
 
             for key, val in translation.items():
-                item = Item()
-                item.icon = self.icon
-                item.subtext = key
-                item.text = val
-                item.actions = [
-                    Action(
-                        "copy",
-                        "Copy result to clipboard",
-                        lambda t=item.text: setClipboardText(t),
-                    )
-                ]
-                results.append(item)
-
+                results.append(StandardItem(id=md_id,
+                                            text=val,
+                                            subtext=key,
+                                            iconUrls=self.icon,
+                                            actions=[
+                                                Action(
+                                                    "copy",
+                                                    "Copy result to clipboard",
+                                                    lambda t=val: setClipboardText(t),
+                                                )
+                                            ]))
             query.add(results)
         else:
             query.add(
-                Item(
+                StandardItem(
                     id=md_id,
                     text=md_name,
-                    icon=self.icon,
+                    iconUrls=self.icon,
                     subtext="Enter text to translate",
                 )
             )
